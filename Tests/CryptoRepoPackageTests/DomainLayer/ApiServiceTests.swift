@@ -9,299 +9,193 @@ import XCTest
 @testable import CryptoRepoPackage
 
 final class ApiServiceTests: XCTestCase {
-    
-    private var localRespo: LocalRepositoryMock?
-    
+
+    private var remoteRepo: RemoteRepositoryMock?
+
     override func setUpWithError() throws {
-        localRespo = LocalRepositoryMock()
+        remoteRepo = RemoteRepositoryMock()
     }
-    
+
     override func tearDownWithError() throws {
-        localRespo = nil
-    }
-    
-    func testGetOne_onSuccess() throws {
-        // Arrange
-        let expectation = XCTestExpectation(description: "Expectation description")
-        
-        // Act
-        localRespo?.get(id: UUID().uuidString) { result in
-            // Assert
-            switch result {
-            case .success(let todoTaskDto):
-                if let todoTaskDto = todoTaskDto {
-                    XCTAssertNotNil(todoTaskDto, "Success, we got an item.")
-                } else {
-                    XCTAssertNil(todoTaskDto, "Shouldn't be here, some error occurred")
-                }
-            case .failure(let repoError):
-                XCTAssertNotNil(repoError, "Shouldn't be here, it is a success test")
-            }
-            expectation.fulfill()
-        }
-        wait(for: [expectation], timeout: 2.0)
-    }
-    
-    func testGetOne_onFailure_itemNotFoundError() {
-        // Arrange
-        let expectation = XCTestExpectation(description: "Expectation description")
-        localRespo?.getOneSuccess = false
-        
-        // Act
-        localRespo?.get(id: UUID().uuidString) { result in
-            // Assert
-            switch result {
-            case .success( _):
-                break
-            case .failure(let repoError):
-                XCTAssertNotNil(repoError, "Error received \(repoError)")
-            }
-            expectation.fulfill()
-        }
-        wait(for: [expectation], timeout: 2.0)
-    }
-    
-    func testList_onSuccess() {
-        // Arrange
-        let expectation = XCTestExpectation(description: "Expectation description")
-        
-        // Act
-        localRespo?.list() { result in
-            // Assert
-            switch result {
-            case .success(let todoTaskDtos):
-                XCTAssertTrue(todoTaskDtos.count > 0, "There are \(todoTaskDtos.count) items on the list")
-            case .failure(_ ):
-                break
-            }
-            expectation.fulfill()
-        }
-        wait(for: [expectation], timeout: 2.0)
-    }
-    
-    func testList_onFailure_itemsNotFound() {
-        // Arrange
-        let expectation = XCTestExpectation(description: "Expectation description")
-        localRespo?.listSuccess = false
-        
-        // Act
-        localRespo?.list() { result in
-            // Assert
-            switch result {
-            case .success(_ ):
-                break
-            case .failure(let repoError):
-                XCTAssertNotNil(repoError, "Not items found: \(repoError.localizedDescription)")
-            }
-            expectation.fulfill()
-        }
-        wait(for: [expectation], timeout: 2.0)
-    }
-    
-    func testAdd_onSuccess() {
-        // Arrange
-        let expectation = XCTestExpectation(description: "Expectation description")
-
-        let newItem = TodoTaskDto(id: UUID().uuidString,
-                                  avatar: "",
-                                  username: "TestUsername",
-                                  title: "Test new title",
-                                  description: "Test new description",
-                                  date: Date(),
-                                  isComplete: false)
-        // Act
-        localRespo?.add(newItem) { result in
-            // Assert
-            switch result {
-            case .success(let addedItem):
-                XCTAssertNotNil(addedItem, "Item added with id \(addedItem.id)")
-            case .failure(_ ):
-                break
-            }
-            expectation.fulfill()
-        }
-        wait(for: [expectation], timeout: 2.0)
+        remoteRepo = nil
     }
 
-    func testAdd_onFailure() {
+    func testList_onSuccess() async {
         // Arrange
-        let expectation = XCTestExpectation(description: "Expectation description")
-        localRespo?.listSuccess = false
+        remoteRepo?.listSuccess = true
+        let returnCoins = getFakeCoinList()
+        remoteRepo?.listReturnData = returnCoins
 
-        let newItem = TodoTaskDto(id: UUID().uuidString,
-                                  avatar: "",
-                                  username: "TestUsername",
-                                  title: "Test new title",
-                                  description: "Test new description",
-                                  date: Date(),
-                                  isComplete: false)
         // Act
-        localRespo?.add(newItem) { result in
+        do {
+            let coins = try await remoteRepo?.list()
             // Assert
-            switch result {
-            case .success(_ ):
-                break
-            case .failure(let repoError):
-                XCTAssertNotNil(repoError, "Error adding a new item \(repoError.localizedDescription)")
+            XCTAssertEqual(remoteRepo?.isListCalled, true)
+            XCTAssertEqual(remoteRepo?.numberOfTimesIsCalledList, 1)
+            XCTAssertEqual(returnCoins.count, coins?.count)
+            if let coins = coins {
+                XCTAssertEqual(returnCoins[1].name, coins[1].name)
             }
-            expectation.fulfill()
+        } catch {
         }
-        wait(for: [expectation], timeout: 2.0)
     }
 
-    func testUpdate_onSuccess() {
+    func testList_onFailure() async {
         // Arrange
-        let expectation = XCTestExpectation(description: "Expectation description")
+        remoteRepo?.listSuccess = false
 
-        let itemToUpdate = TodoTaskDto(id: UUID().uuidString,
-                                       avatar: "",
-                                       username: "TestUsername",
-                                       title: "Test new title",
-                                       description: "Test new description",
-                                       date: Date(),
-                                       isComplete: false)
         // Act
-        localRespo?.update(itemToUpdate) { result in
+        do {
+            let _ = try await remoteRepo?.list()
+        } catch {
             // Assert
-            switch result {
-            case .success(let itemUpdated):
-                XCTAssertNotNil(itemUpdated, "Item with id \(itemUpdated.id) has been updated")
-            case .failure(_ ):
-                break
-            }
-            expectation.fulfill()
+            XCTAssertNotNil(error)
         }
-        wait(for: [expectation], timeout: 2.0)
     }
 
-    func testUpdate_onFailure_itemNotUpdatedError() {
-        // Arrange
-        let expectation = XCTestExpectation(description: "Expectation description")
-        localRespo?.updateSuccess = false
+}
 
-        let itemToUpdate = TodoTaskDto(id: UUID().uuidString,
-                                       avatar: "",
-                                       username: "TestUsername",
-                                       title: "Test new title",
-                                       description: "Test new description",
-                                       date: Date(),
-                                       isComplete: false)
-        // Act
-        localRespo?.update(itemToUpdate) { result in
-            // Assert
-            switch result {
-            case .success(_ ):
-                break
-            case .failure(let repoError):
-                XCTAssertNotNil(repoError, "Error updating item \(repoError.localizedDescription)")
-            }
-            expectation.fulfill()
-        }
-        wait(for: [expectation], timeout: 2.0)
-    }
+extension ApiServiceTests {
 
-    func testDelete_onSuccess() {
-        // Arrange
-        let expectation = XCTestExpectation(description: "Expectation description")
-
-        let itemToDelete = TodoTaskDto(id: UUID().uuidString,
-                                       avatar: "",
-                                       username: "TestUsername",
-                                       title: "Test new title",
-                                       description: "Test new description",
-                                       date: Date(),
-                                       isComplete: false)
-        // Act
-        localRespo?.delete(itemToDelete) { result in
-            // Assert
-            switch result {
-            case .success(let success):
-                XCTAssertTrue(success, "Items has been deleted")
-            case .failure(_ ):
-                break
-            }
-            expectation.fulfill()
-        }
-        wait(for: [expectation], timeout: 2.0)
-    }
-
-    func testDelete_onFailure() {
-        // Arrange
-        let expectation = XCTestExpectation(description: "Expectation description")
-        localRespo?.deleteSuccess = false
-
-        let itemToDelete = TodoTaskDto(id: UUID().uuidString,
-                                       avatar: "",
-                                       username: "TestUsername",
-                                       title: "Test new title",
-                                       description: "Test new description",
-                                       date: Date(),
-                                       isComplete: false)
-        // Act
-        localRespo?.delete(itemToDelete) { result in
-            // Assert
-            switch result {
-            case .success(_ ):
-                break
-            case .failure(let repoError):
-                XCTAssertNotNil(repoError, "Error deleting item \(repoError.localizedDescription)")
-            }
-            expectation.fulfill()
-        }
-        wait(for: [expectation], timeout: 2.0)
-    }
-
-    func testComplete_onSuccess() {
-        // Arrange
-        let expectation = XCTestExpectation(description: "Expectation description")
-
-        let itemToUpdate = TodoTaskDto(id: UUID().uuidString,
-                                       avatar: "",
-                                       username: "TestUsername",
-                                       title: "Test new title",
-                                       description: "Test new description",
-                                       date: Date(),
-                                       isComplete: true)
-        // Act
-        localRespo?.complete(itemToUpdate) { result in
-            // Assert
-            switch result {
-            case .success(let updatedItem):
-                XCTAssertNotNil(updatedItem, "Updated item has been got")
-                XCTAssertFalse(updatedItem.isComplete, "Item has been updated")
-            case .failure(_ ):
-                break
-            }
-            expectation.fulfill()
-        }
-        wait(for: [expectation], timeout: 2.0)
-
-    }
-
-    func testComplete_onFailure() {
-        // Arrange
-        let expectation = XCTestExpectation(description: "Expectation description")
-        localRespo?.deleteSuccess = false
-
-        let itemToUpdate = TodoTaskDto(id: UUID().uuidString,
-                                       avatar: "",
-                                       username: "TestUsername",
-                                       title: "Test new title",
-                                       description: "Test new description",
-                                       date: Date(),
-                                       isComplete: true)
-        // Act
-        localRespo?.complete(itemToUpdate) { result in
-            // Assert
-            switch result {
-            case .success(_ ):
-                break
-            case .failure(let repoError):
-                XCTAssertNotNil(repoError, "Error updating item \(repoError.localizedDescription)")
-            }
-            expectation.fulfill()
-        }
-        wait(for: [expectation], timeout: 2.0)
-
+    // MARK: - Mock data
+    private func getFakeCoinList() -> [CoinDto] {
+        var coinDtos: [CoinDto] = []
+        coinDtos.append(CoinDto(id: "bitcoin",
+                               symbol: "btc",
+                               name: "Bitcoin",
+                               image: "https://coin-images.coingecko.com/coins/images/1/large/bitcoin.png?1696501400",
+                               currentPrice: 87335,
+                               marketCap: nil,
+                               marketCapRank: nil,
+                               fullyDilutedValuation: nil,
+                               totalVolume: nil,
+                               high24H: nil,
+                               low24H: nil,
+                               priceChange24H: 2420.27,
+                               priceChangePercentage24H: 2.85023,
+                               marketCapChange24H: nil,
+                               marketCapChangePercentage24H: nil,
+                               circulatingSupply: nil,
+                               totalSupply: nil,
+                               maxSupply: nil,
+                               ath: nil,
+                               athChangePercentage: nil,
+                               athDate: nil,
+                               atl: nil,
+                               atlChangePercentage: nil,
+                               atlDate: nil,
+                               lastUpdated: nil,
+                               sparklineIn7D: nil,
+                               priceChangePercentage24HInCurrency: nil))
+        coinDtos.append(CoinDto(id: "ethereum",
+                               symbol: "eth",
+                               name: "Ethereum",
+                               image: "https://coin-images.coingecko.com/coins/images/279/large/ethereum.png?1696501628",
+                               currentPrice: 3729.79,
+                               marketCap: nil,
+                               marketCapRank: nil,
+                               fullyDilutedValuation: nil,
+                               totalVolume: nil,
+                               high24H: nil,
+                               low24H: nil,
+                               priceChange24H: 128.14,
+                               priceChangePercentage24H: 3.55785,
+                               marketCapChange24H: nil,
+                               marketCapChangePercentage24H: nil,
+                               circulatingSupply: nil,
+                               totalSupply: nil,
+                               maxSupply: nil,
+                               ath: nil,
+                               athChangePercentage: nil,
+                               athDate: nil,
+                               atl: nil,
+                               atlChangePercentage: nil,
+                               atlDate: nil,
+                               lastUpdated: nil,
+                               sparklineIn7D: nil,
+                               priceChangePercentage24HInCurrency: nil))
+        coinDtos.append(CoinDto(id: "tether",
+                               symbol: "usdt",
+                               name: "Tether",
+                               image: "https://coin-images.coingecko.com/coins/images/325/large/Tether.png?1696501661",
+                               currentPrice: 1.48,
+                               marketCap: nil,
+                               marketCapRank: nil,
+                               fullyDilutedValuation: nil,
+                               totalVolume: nil,
+                               high24H: nil,
+                               low24H: nil,
+                               priceChange24H: 0.00705495,
+                               priceChangePercentage24H: 0.47838,
+                               marketCapChange24H: nil,
+                               marketCapChangePercentage24H: nil,
+                               circulatingSupply: nil,
+                               totalSupply: nil,
+                               maxSupply: nil,
+                               ath: nil,
+                               athChangePercentage: nil,
+                               athDate: nil,
+                               atl: nil,
+                               atlChangePercentage: nil,
+                               atlDate: nil,
+                               lastUpdated: nil,
+                               sparklineIn7D: nil,
+                               priceChangePercentage24HInCurrency: nil))
+        coinDtos.append(CoinDto(id: "binancecoin",
+                               symbol: "bnb",
+                               name: "BNB",
+                               image: "https://coin-images.coingecko.com/coins/images/825/large/bnb-icon2_2x.png?1696501970",
+                               currentPrice: 789.07,
+                               marketCap: nil,
+                               marketCapRank: nil,
+                               fullyDilutedValuation: nil,
+                               totalVolume: nil,
+                               high24H: nil,
+                               low24H: nil,
+                               priceChange24H: 46.82,
+                               priceChangePercentage24H: 6.30848,
+                               marketCapChange24H: nil,
+                               marketCapChangePercentage24H: nil,
+                               circulatingSupply: nil,
+                               totalSupply: nil,
+                               maxSupply: nil,
+                               ath: nil,
+                               athChangePercentage: nil,
+                               athDate: nil,
+                               atl: nil,
+                               atlChangePercentage: nil,
+                               atlDate: nil,
+                               lastUpdated: nil,
+                               sparklineIn7D: nil,
+                               priceChangePercentage24HInCurrency: nil))
+        coinDtos.append(CoinDto(id: "solana",
+                               symbol: "sol",
+                               name: "Solana",
+                               image: "https://coin-images.coingecko.com/coins/images/4128/large/solana.png?1718769756",
+                               currentPrice: 198.44,
+                               marketCap: nil,
+                               marketCapRank: nil,
+                               fullyDilutedValuation: nil,
+                               totalVolume: nil,
+                               high24H: nil,
+                               low24H: nil,
+                               priceChange24H: 8.91,
+                               priceChangePercentage24H: 4.7038,
+                               marketCapChange24H: nil,
+                               marketCapChangePercentage24H: nil,
+                               circulatingSupply: nil,
+                               totalSupply: nil,
+                               maxSupply: nil,
+                               ath: nil,
+                               athChangePercentage: nil,
+                               athDate: nil,
+                               atl: nil,
+                               atlChangePercentage: nil,
+                               atlDate: nil,
+                               lastUpdated: nil,
+                               sparklineIn7D: nil,
+                               priceChangePercentage24HInCurrency: nil))
+        return coinDtos
     }
 }
+
