@@ -18,7 +18,7 @@
 <br />
 <p align="center">
   <a href="https://github.com/marcelomogrovejo/cryptorepopackage">
-    <img src="logo-logo-crypto-repo.png" alt="Logo" width="80" height="80">
+    <img src="logo-crypto-repo.png" alt="Logo" width="80" height="80">
   </a>
   <p align="center">
     A simple repository package project which is a persistence layer to CryptoDemo App project.
