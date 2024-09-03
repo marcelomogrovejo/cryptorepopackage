@@ -42,6 +42,7 @@ And a second list of cryptocurrencies underneath.<br>
 
 # Structure 
 * "DataSource": Procotols, error handling and model files.
+* "Extension": Formaters and utils.
 * "DomainLayer": Api service file that exposes the methods to be used by the apps.
 
 # Running the tests
@@ -59,9 +60,7 @@ This will create a signed IPA file that can be installed on iOS devices.
 5. Once the distribution is complete, you can use the IPA file to install the app on iOS devices
 
 # Dependencies
-[Swift Package Manager (SPM)](https://www.swift.org/documentation/package-manager/) is used as a dependency manager.
-List of dependencies: 
-* [Kingfisher package](https://github.com/onevcat/Kingfisher/) -> Kingfisher is a powerful, pure-Swift library for downloading and caching images from the web.
+[Swift Package Manager (SPM)](https://www.swift.org/documentation/package-manager/) is used as a dependency manager. 
 
 # Workflow
 
