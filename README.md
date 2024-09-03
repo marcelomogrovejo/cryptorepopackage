@@ -17,8 +17,8 @@
 
 <br />
 <p align="center">
-  <a href="https://github.com/marcelomogrovejo/todo-repo-pkg">
-    <img src="logo-to-do-repo.png" alt="Logo" width="80" height="80">
+  <a href="https://github.com/marcelomogrovejo/cryptorepopackage">
+    <img src="logo-logo-crypto-repo.png" alt="Logo" width="80" height="80">
   </a>
   <p align="center">
     A simple repository package project which is a persistence layer to CryptoDemo App project.
