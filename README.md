@@ -72,7 +72,7 @@ If you come across any issues while using the ToDoRepository package app, please
 App version: 1.02
 iOS version: 16.1
 Description: When the api request a complete list of cryptocurrencies, nothing is received.
-Steps to reproduce: Start the app, observe that nothing is showed on both cryptocurrency list.
+Steps to reproduce: Start the app, observe that nothing is showed on both cryptocurrency and top 5 lists.
 ```
 
 * Submitting pull requests: <br> 
